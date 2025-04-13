@@ -15,5 +15,8 @@ class CoinRepository @Inject constructor(
     suspend fun getCoinDetail(id: String): CoinDetail {
         return api.getCoinDetail(id)
     }
+    suspend fun getOhlcData(id: String, days: Int): List<List<Double>> {
+        return api.getOhlcData(id, days = days)
+    }
 
 }

@@ -30,4 +30,12 @@ interface CoinGeckoApiService {
     suspend fun getCoinDetail(
         @Path("id") id: String
     ): CoinDetail
+
+    @GET("coins/{id}/ohlc")
+    suspend fun getOhlcData(
+        @Path("id") id: String,
+        @Query("vs_currency") vsCurrency: String = "usd",
+        @Query("days") days: Int = 7
+    ): List<List<Double>>
+
 }
