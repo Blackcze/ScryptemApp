@@ -59,6 +59,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
             if (ohlcData.isNotEmpty()) {
                 AndroidView(factory = { context ->
                     CandleStickChart(context).apply {
+                        clear()
                         layoutParams = ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             500
