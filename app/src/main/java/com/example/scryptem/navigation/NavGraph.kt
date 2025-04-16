@@ -6,6 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.scryptem.ui.screen.CoinDetailScreen
 import com.example.scryptem.ui.screen.CoinListScreen
+import com.example.scryptem.ui.screen.FavoriteCoinsScreen
+
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -18,6 +20,9 @@ fun AppNavGraph(navController: NavHostController) {
         }
         composable("coin_detail/{coinId}") {
             CoinDetailScreen()
+        }
+        composable("favorite_coins") {
+            FavoriteCoinsScreen(navController)
         }
     }
 }
