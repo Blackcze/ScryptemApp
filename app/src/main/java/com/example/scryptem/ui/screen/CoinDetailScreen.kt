@@ -8,22 +8,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.core.text.HtmlCompat
-import com.example.scryptem.presentation.coin_detail.CoinDetailViewModel
+import coil.compose.AsyncImage
 import com.github.mikephil.charting.charts.CandleStickChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.CandleData
 import com.github.mikephil.charting.data.CandleDataSet
 import com.github.mikephil.charting.data.CandleEntry
 import androidx.compose.ui.viewinterop.AndroidView
-import coil.compose.AsyncImage
+import com.example.scryptem.presentation.coin_detail.CoinDetailViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.scryptem.presentation.coin_detail.AddressBalanceInfo
+import java.text.NumberFormat
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
     val coinDetail by viewModel.coinDetail.collectAsState()
     val ohlcData by viewModel.ohlcData.collectAsState()
+    val addressInfo by viewModel.addressInfo.collectAsState()
+    val addressInput by viewModel.addressInput.collectAsState()
+
     var selectedDays by remember { mutableStateOf(30) }
+    var internalAddress by remember { mutableStateOf(addressInput) }
+    val scrollState = rememberScrollState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -33,10 +42,11 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(scrollState)
                     .padding(16.dp)
                     .padding(top = 32.dp)
             ) {
-                // Info o kryptoměně
+                // Základní info
                 AsyncImage(
                     model = coin.image.large,
                     contentDescription = coin.name,
@@ -50,7 +60,6 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Přepínač mezi 7 a 30 dny
                 TimeframeSelector(selectedDays) {
                     selectedDays = it
                     viewModel.loadOhlcData(it)
@@ -58,7 +67,6 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Candlestick graf bezpečně
                 if (ohlcData.isNotEmpty()) {
                     AndroidView(factory = { context ->
                         CandleStickChart(context).apply {
@@ -67,7 +75,6 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                                 ViewGroup.LayoutParams.MATCH_PARENT,
                                 500
                             )
-
                             val entries = ohlcData.mapIndexed { index, entry ->
                                 CandleEntry(
                                     index.toFloat(),
@@ -99,7 +106,6 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                         }
                     })
                 } else {
-                    // Graf ještě není načtený
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -121,9 +127,52 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                     maxLines = 10,
                     overflow = TextOverflow.Ellipsis
                 )
+
+                Spacer(modifier = Modifier.height(24.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Podpora adresy
+                if (coin.id in listOf("bitcoin", "ethereum", "litecoin")) {
+                    Text(text = "Zůstatek peněženky", style = MaterialTheme.typography.titleMedium)
+
+                    OutlinedTextField(
+                        value = internalAddress,
+                        onValueChange = { internalAddress = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Adresa") }
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            println("🟢 Kliknutí na tlačítko zachyceno")
+                            viewModel.addressInput.value = internalAddress
+                            viewModel.loadAddressInfo(
+                                address = internalAddress,
+                                network = coin.id,
+                                coinPriceUsd = coin.market_data.currentPrice["usd"] ?: 0.0
+                            )
+                        },
+                        enabled = internalAddress.isNotBlank()
+                    ) {
+                        Text("Zkontrolovat zůstatek")
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    addressInfo?.let { info ->
+                        val formatter = NumberFormat.getNumberInstance()
+                        Text("Zůstatek: ${formatter.format(info.balance)} satoshi")
+                        Text("Zůstatek v USD: ${info.usdValue ?: "-"}")
+                        Text("Přijato celkem: ${formatter.format(info.received)} satoshi")
+                        Text("Odesláno celkem: ${formatter.format(info.spent)} satoshi")
+                        Text("Doporučený poplatek: ${info.feeSuggestion ?: "-"}")
+                    }
+                }
             }
         } ?: run {
-            // Loader při načítání detailu
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = androidx.compose.ui.Alignment.Center
@@ -133,6 +182,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
         }
     }
 }
+
 @Composable
 fun TimeframeSelector(selectedDays: Int, onSelectionChange: (Int) -> Unit) {
     val options = listOf(7, 30)
