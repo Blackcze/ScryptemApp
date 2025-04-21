@@ -16,9 +16,7 @@ object PreferencesModule {
 
     @Provides
     @Singleton
-    fun provideAddressPreferences(
-        @ApplicationContext context: Context
-    ): AddressPreferences {
+    fun provideAddressPreferences(@ApplicationContext context: Context): AddressPreferences {
         return AddressPreferences(context)
     }
 
@@ -27,5 +25,4 @@ object PreferencesModule {
     fun provideAmountPreferences(@ApplicationContext context: Context): AmountPreferences {
         return AmountPreferences(context)
     }
-
 }

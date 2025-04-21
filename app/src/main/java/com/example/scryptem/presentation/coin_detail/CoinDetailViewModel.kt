@@ -3,20 +3,19 @@ package com.example.scryptem.presentation.coin_detail
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.scryptem.data.local.AddressPreferences
+import com.example.scryptem.data.local.AmountPreferences
 import com.example.scryptem.data.remote.dto.CoinDetail
 import com.example.scryptem.data.remote.dto.OhlcEntry
 import com.example.scryptem.data.repository.CoinRepository
+import com.example.scryptem.data.repository.MempoolRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.math.RoundingMode
 import javax.inject.Inject
 import androidx.lifecycle.SavedStateHandle
-import com.example.scryptem.data.local.AddressPreferences
-import com.example.scryptem.data.local.AmountPreferences
-import com.example.scryptem.data.repository.MempoolRepository
 
 @HiltViewModel
 class CoinDetailViewModel @Inject constructor(
@@ -35,26 +34,34 @@ class CoinDetailViewModel @Inject constructor(
     private val _ohlcData = MutableStateFlow<List<OhlcEntry>>(emptyList())
     val ohlcData: StateFlow<List<OhlcEntry>> = _ohlcData
 
-    val addressInput = MutableStateFlow("")
+    private val _addressInput = MutableStateFlow("")
+    val addressInput: StateFlow<String> = _addressInput
+
+    private val _ownedAmount = MutableStateFlow("")
+    val ownedAmount: StateFlow<String> = _ownedAmount
+
     private val _addressInfo = MutableStateFlow<AddressBalanceInfo?>(null)
     val addressInfo: StateFlow<AddressBalanceInfo?> = _addressInfo
-    val ownedAmount = MutableStateFlow("")
-
-
 
     init {
         viewModelScope.launch {
             _coinDetail.value = repository.getCoinDetail(coinId)
-            addressPreferences.address.collect { savedAddress ->
-                println("📥 Načtená adresa z DataStore: $savedAddress")
-                if (savedAddress != null) {
-                    addressInput.value = savedAddress
-                }
-            }
-            amountPreferences.getAmountFlow(coinId).collect {
-                ownedAmount.value = it
+        }
+
+        viewModelScope.launch {
+            addressPreferences.address.collectLatest { savedAddress ->
+                println("Načtená adresa z DataStore: $savedAddress")
+                _addressInput.value = savedAddress ?: ""
             }
         }
+
+        viewModelScope.launch {
+            amountPreferences.getAmountFlow(coinId).collectLatest {
+                println("Načtené množství z DataStore: $it")
+                _ownedAmount.value = it ?: ""
+            }
+        }
+
         loadOhlcData(30)
     }
 
@@ -72,6 +79,7 @@ class CoinDetailViewModel @Inject constructor(
             }
         }
     }
+
     fun loadAddressInfo(address: String, network: String, coinPriceUsd: Double?) {
         Log.d("AddressCheck", "Kontrola: $address na síti $network")
 
@@ -96,29 +104,25 @@ class CoinDetailViewModel @Inject constructor(
                     feeSuggestion = "${fees.hourFee} sat/vB"
                 )
             } catch (e: Exception) {
-                Log.e("AddressCheck", " Chyba při načítání adresy", e)
+                Log.e("AddressCheck", "Chyba při načítání adresy", e)
                 _addressInfo.value = null
             }
         }
     }
+
     fun onAddressEntered(address: String) {
-        addressInput.value = address
-        println("💾 Ukládám adresu: $address")
+        _addressInput.value = address
+        println("Ukládám adresu: $address")
         viewModelScope.launch {
             addressPreferences.saveAddress(address)
         }
     }
 
-    fun saveAddress(address: String) {
-        viewModelScope.launch {
-            addressPreferences.saveAddress(address)
-        }
-    }
     fun onAmountChanged(newAmount: String) {
-        ownedAmount.value = newAmount
+        _ownedAmount.value = newAmount
+        println("Ukládám množství: $newAmount pro coinId=$coinId")
         viewModelScope.launch {
             amountPreferences.saveAmount(coinId, newAmount)
         }
     }
-
 }
