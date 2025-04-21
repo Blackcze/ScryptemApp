@@ -33,6 +33,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
     var selectedDays by remember { mutableStateOf(30) }
     var internalAddress by remember { mutableStateOf(addressInput) }
     val scrollState = rememberScrollState()
+    val ownedAmount by viewModel.ownedAmount.collectAsState()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -132,6 +133,41 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                 Divider()
                 Spacer(modifier = Modifier.height(12.dp))
 
+                OutlinedTextField(
+                    value = ownedAmount,
+                    onValueChange = {
+                        viewModel.onAmountChanged(it)
+                    },
+                    label = { Text("Vlastněné množství") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                LaunchedEffect(ownedAmount) {
+                    println("✅ Množství zadané: '$ownedAmount'")
+                }
+                /*coinDetail?.let { coin ->
+                    val price = coin.market_data.currentPrice["usd"] ?: 0.0
+                    val value = ownedAmount.toDoubleOrNull()?.let { it * price } ?: 0.0
+                    Text("Hodnota v USD: $${"%.2f".format(value)}")
+                }*/
+                coinDetail?.let { coin ->
+                    val price = coin.market_data.currentPrice["usd"] ?: 0.0
+                    println("💵 Aktuální cena: $price USD")
+
+                    val amount = ownedAmount.toDoubleOrNull()
+                    println("🔢 Převedené množství: $amount")
+
+                    val value = ownedAmount
+                        .replace(",", ".")
+                        .toDoubleOrNull()
+                        ?.let { it * price } ?: 0.0
+
+                    Text("Hodnota v USD: $${"%.2f".format(value)}")
+                }
+
+
                 // Podpora adresy
                 if (coin.id in listOf("bitcoin", "ethereum", "litecoin")) {
                     Text(text = "Zůstatek peněženky", style = MaterialTheme.typography.titleMedium)
@@ -147,7 +183,6 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
 
                     Button(
                         onClick = {
-                            println("🟢 Kliknutí na tlačítko zachyceno")
                             viewModel.addressInput.value = internalAddress
                             viewModel.loadAddressInfo(
                                 address = internalAddress,

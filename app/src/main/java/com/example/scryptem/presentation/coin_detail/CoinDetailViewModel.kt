@@ -15,6 +15,7 @@ import java.math.RoundingMode
 import javax.inject.Inject
 import androidx.lifecycle.SavedStateHandle
 import com.example.scryptem.data.local.AddressPreferences
+import com.example.scryptem.data.local.AmountPreferences
 import com.example.scryptem.data.repository.MempoolRepository
 
 @HiltViewModel
@@ -22,6 +23,7 @@ class CoinDetailViewModel @Inject constructor(
     private val repository: CoinRepository,
     private val mempoolRepository: MempoolRepository,
     private val addressPreferences: AddressPreferences,
+    private val amountPreferences: AmountPreferences,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -36,10 +38,22 @@ class CoinDetailViewModel @Inject constructor(
     val addressInput = MutableStateFlow("")
     private val _addressInfo = MutableStateFlow<AddressBalanceInfo?>(null)
     val addressInfo: StateFlow<AddressBalanceInfo?> = _addressInfo
+    val ownedAmount = MutableStateFlow("")
+
+
 
     init {
         viewModelScope.launch {
             _coinDetail.value = repository.getCoinDetail(coinId)
+            addressPreferences.address.collect { savedAddress ->
+                println("📥 Načtená adresa z DataStore: $savedAddress")
+                if (savedAddress != null) {
+                    addressInput.value = savedAddress
+                }
+            }
+            amountPreferences.getAmountFlow(coinId).collect {
+                ownedAmount.value = it
+            }
         }
         loadOhlcData(30)
     }
@@ -87,16 +101,24 @@ class CoinDetailViewModel @Inject constructor(
             }
         }
     }
-
-    /*fun loadAddressInfo(address: String, network: String, coinPriceUsd: Double?) {
+    fun onAddressEntered(address: String) {
+        addressInput.value = address
+        println("💾 Ukládám adresu: $address")
         viewModelScope.launch {
-            _addressInfo.value = AddressBalanceInfo(
-                balance = 500000000L,
-                received = 1000000000L,
-                spent = 500000000L,
-                usdValue = BigDecimal("30214.55"),
-                feeSuggestion = "12 sat/B"
-            )
+            addressPreferences.saveAddress(address)
         }
-    }*/
+    }
+
+    fun saveAddress(address: String) {
+        viewModelScope.launch {
+            addressPreferences.saveAddress(address)
+        }
+    }
+    fun onAmountChanged(newAmount: String) {
+        ownedAmount.value = newAmount
+        viewModelScope.launch {
+            amountPreferences.saveAmount(coinId, newAmount)
+        }
+    }
+
 }
