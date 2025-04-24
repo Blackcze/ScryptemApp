@@ -16,6 +16,7 @@ import com.example.scryptem.presentation.favorite.FavoriteCoinViewModel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Settings
 import com.example.scryptem.data.local.entity.FavoriteCoinEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -38,9 +39,11 @@ fun CoinListScreen(navController: NavController, viewModel: CoinViewModel = hilt
                             contentDescription = "Oblíbené"
                         )
                     }
+                    IconButton(onClick = { navController.navigate("settings") }) {
+                        Icon(imageVector = Icons.Default.Settings, contentDescription = "Nastavení")
+                    }
                 }
             )
-
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {

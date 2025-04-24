@@ -1,23 +1,22 @@
 package com.example.scryptem.data.local
 
-import android.content.Context
-import androidx.datastore.preferences.core.*
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.dataStore by preferencesDataStore(name = "amount_settings")
-
-class AmountPreferences(private val context: Context) {
+class AmountPreferences(private val dataStore: DataStore<Preferences>) {
 
     fun getAmountFlow(coinId: String): Flow<String> {
         val key = stringPreferencesKey("amount_$coinId")
-        return context.dataStore.data.map { prefs -> prefs[key] ?: "" }
+        return dataStore.data.map { prefs -> prefs[key] ?: "" }
     }
 
     suspend fun saveAmount(coinId: String, amount: String) {
         val key = stringPreferencesKey("amount_$coinId")
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[key] = amount
         }
     }
