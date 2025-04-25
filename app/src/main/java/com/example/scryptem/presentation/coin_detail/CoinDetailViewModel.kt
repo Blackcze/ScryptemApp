@@ -3,8 +3,10 @@ package com.example.scryptem.presentation.coin_detail
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.SavedStateHandle
 import com.example.scryptem.data.local.AddressPreferences
 import com.example.scryptem.data.local.AmountPreferences
+import com.example.scryptem.data.local.SettingsPreferences
 import com.example.scryptem.data.remote.dto.CoinDetail
 import com.example.scryptem.data.remote.dto.OhlcEntry
 import com.example.scryptem.data.repository.CoinRepository
@@ -15,7 +17,6 @@ import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.math.RoundingMode
 import javax.inject.Inject
-import androidx.lifecycle.SavedStateHandle
 
 @HiltViewModel
 class CoinDetailViewModel @Inject constructor(
@@ -23,6 +24,7 @@ class CoinDetailViewModel @Inject constructor(
     private val mempoolRepository: MempoolRepository,
     private val addressPreferences: AddressPreferences,
     private val amountPreferences: AmountPreferences,
+    private val settingsPreferences: SettingsPreferences,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -43,45 +45,64 @@ class CoinDetailViewModel @Inject constructor(
     private val _addressInfo = MutableStateFlow<AddressBalanceInfo?>(null)
     val addressInfo: StateFlow<AddressBalanceInfo?> = _addressInfo
 
+    private val _selectedCurrency = MutableStateFlow("usd")
+    val selectedCurrency: StateFlow<String> = _selectedCurrency
+
+    private val lastOhlcLoad = mutableMapOf<Int, Long>()
+
     init {
         viewModelScope.launch {
-            _coinDetail.value = repository.getCoinDetail(coinId)
+            settingsPreferences.currency.collectLatest { currency ->
+                _selectedCurrency.value = currency.lowercase()
+
+                try {
+                    _coinDetail.value = repository.getCoinDetail(coinId)
+                    loadOhlcData(30, currency)
+                } catch (e: Exception) {
+                    Log.e("CoinDetailVM", "Nepodařilo se načíst detail coinu", e)
+                }
+            }
         }
 
         viewModelScope.launch {
             addressPreferences.address.collectLatest { savedAddress ->
-                println("Načtená adresa z DataStore: $savedAddress")
                 _addressInput.value = savedAddress ?: ""
             }
         }
 
         viewModelScope.launch {
             amountPreferences.getAmountFlow(coinId).collectLatest {
-                println("Načtené množství z DataStore: $it")
                 _ownedAmount.value = it ?: ""
             }
         }
-
-        loadOhlcData(30)
     }
 
-    fun loadOhlcData(days: Int) {
+    fun loadOhlcData(days: Int, currency: String) {
+        val now = System.currentTimeMillis()
+        val lastLoad = lastOhlcLoad[days] ?: 0
+        if (now - lastLoad < 5000) return
+        lastOhlcLoad[days] = now
+
         viewModelScope.launch {
-            val rawData = repository.getOhlcData(coinId, days)
-            _ohlcData.value = rawData.map {
-                OhlcEntry(
-                    timestamp = it[0].toLong(),
-                    open = it[1].toFloat(),
-                    high = it[2].toFloat(),
-                    low = it[3].toFloat(),
-                    close = it[4].toFloat()
-                )
+            try {
+                val rawData = repository.getOhlcData(coinId, days, currency.lowercase())
+                _ohlcData.value = rawData.map {
+                    OhlcEntry(
+                        timestamp = it[0].toLong(),
+                        open = it[1].toFloat(),
+                        high = it[2].toFloat(),
+                        low = it[3].toFloat(),
+                        close = it[4].toFloat()
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("CoinDetailVM", "Chyba při načítání OHLC", e)
             }
         }
     }
 
-    fun loadAddressInfo(address: String, network: String, coinPriceUsd: Double?) {
-        Log.d("AddressCheck", "Kontrola: $address na síti $network")
+    fun loadAddressInfo(address: String, network: String, coinDetail: CoinDetail) {
+        val coinPrice = coinDetail.market_data.currentPrice[_selectedCurrency.value]
 
         viewModelScope.launch {
             try {
@@ -89,7 +110,7 @@ class CoinDetailViewModel @Inject constructor(
                 val fees = mempoolRepository.getFees()
 
                 val balance = info.chain_stats.funded_txo_sum - info.chain_stats.spent_txo_sum
-                val usd = coinPriceUsd?.let {
+                val fiatValue = coinPrice?.let {
                     BigDecimal(balance)
                         .divide(BigDecimal(1e8), 8, RoundingMode.HALF_UP)
                         .multiply(BigDecimal(it))
@@ -100,7 +121,7 @@ class CoinDetailViewModel @Inject constructor(
                     balance = balance,
                     received = info.chain_stats.funded_txo_sum,
                     spent = info.chain_stats.spent_txo_sum,
-                    usdValue = usd,
+                    usdValue = fiatValue,
                     feeSuggestion = "${fees.hourFee} sat/vB"
                 )
             } catch (e: Exception) {
@@ -112,7 +133,6 @@ class CoinDetailViewModel @Inject constructor(
 
     fun onAddressEntered(address: String) {
         _addressInput.value = address
-        println("Ukládám adresu: $address")
         viewModelScope.launch {
             addressPreferences.saveAddress(address)
         }
@@ -120,7 +140,6 @@ class CoinDetailViewModel @Inject constructor(
 
     fun onAmountChanged(newAmount: String) {
         _ownedAmount.value = newAmount
-        println("Ukládám množství: $newAmount pro coinId=$coinId")
         viewModelScope.launch {
             amountPreferences.saveAmount(coinId, newAmount)
         }

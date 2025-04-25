@@ -36,13 +36,17 @@ fun SettingsScreen(viewModel: SettingsViewModel = hiltViewModel()) {
                 onSelectedChange = { viewModel.setTheme(it) }
             )
 
-            // Měna
+            // Výchozí měna
             Text("Výchozí měna")
             DropdownSelector(
-                options = listOf("USD", "EUR", "CZK"),
+                options = listOf(
+                    "USD", "EUR", "CZK", "GBP", "AUD", "CAD", "CHF", "JPY", "CNY", "SEK",
+                    "NZD", "NOK", "SGD", "HKD", "PLN", "MXN", "INR", "BRL", "ZAR", "TRY", "DKK"
+                ),
                 selected = currency,
                 onSelectedChange = { viewModel.setCurrency(it) }
             )
+
 
             // Výchozí obrazovka
             Text("Výchozí obrazovka")

@@ -4,15 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.scryptem.data.remote.Coin
 import com.example.scryptem.data.repository.CoinRepository
+import com.example.scryptem.data.local.SettingsPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class CoinViewModel @Inject constructor(
-    private val repository: CoinRepository
+    private val repository: CoinRepository,
+    private val settingsPrefs: SettingsPreferences
 ) : ViewModel() {
 
     private val _coins = MutableStateFlow<List<Coin>>(emptyList())
@@ -22,14 +23,19 @@ class CoinViewModel @Inject constructor(
     val isLoading: StateFlow<Boolean> = _isLoading
 
     init {
-        loadCoins()
+        viewModelScope.launch {
+            settingsPrefs.currency.collectLatest { selectedCurrency ->
+                loadCoins(selectedCurrency)
+            }
+        }
     }
 
-    fun loadCoins() {
+    private fun loadCoins(currency: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                _coins.value = repository.getCoins()
+                val result = repository.getCoins(vsCurrency = currency.lowercase())
+                _coins.value = result
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
