@@ -36,7 +36,6 @@ interface CoinGeckoApiService {
         @Query("sparkline") sparkline: Boolean = false
     ): CoinDetail
 
-
     @GET("coins/{id}/ohlc")
     suspend fun getOhlcData(
         @Path("id") coinId: String,

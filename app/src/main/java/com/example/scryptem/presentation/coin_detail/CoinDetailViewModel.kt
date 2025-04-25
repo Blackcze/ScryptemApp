@@ -45,22 +45,18 @@ class CoinDetailViewModel @Inject constructor(
     private val _addressInfo = MutableStateFlow<AddressBalanceInfo?>(null)
     val addressInfo: StateFlow<AddressBalanceInfo?> = _addressInfo
 
-    private val _selectedCurrency = MutableStateFlow("usd")
-    val selectedCurrency: StateFlow<String> = _selectedCurrency
+    val currency: StateFlow<String> = settingsPreferences.currency.stateIn(viewModelScope, SharingStarted.Lazily, "USD")
 
     private val lastOhlcLoad = mutableMapOf<Int, Long>()
 
     init {
         viewModelScope.launch {
-            settingsPreferences.currency.collectLatest { currency ->
-                _selectedCurrency.value = currency.lowercase()
-
-                try {
-                    _coinDetail.value = repository.getCoinDetail(coinId)
-                    loadOhlcData(30, currency)
-                } catch (e: Exception) {
-                    Log.e("CoinDetailVM", "Nepodařilo se načíst detail coinu", e)
-                }
+            try {
+                val detail = repository.getCoinDetail(coinId)
+                _coinDetail.value = detail
+                currency.value.let { loadOhlcData(30, it) }
+            } catch (e: Exception) {
+                Log.e("CoinDetailVM", "Nepodařilo se načíst detail coinu", e)
             }
         }
 
@@ -80,12 +76,16 @@ class CoinDetailViewModel @Inject constructor(
     fun loadOhlcData(days: Int, currency: String) {
         val now = System.currentTimeMillis()
         val lastLoad = lastOhlcLoad[days] ?: 0
-        if (now - lastLoad < 5000) return
+        if (now - lastLoad < 5000) {
+            Log.d("CoinDetailVM", "Cooldown aktivní, nevolám znovu")
+            return
+        }
+
         lastOhlcLoad[days] = now
 
         viewModelScope.launch {
             try {
-                val rawData = repository.getOhlcData(coinId, days, currency.lowercase())
+                val rawData = repository.getOhlcData(coinId, currency.lowercase(), days)
                 _ohlcData.value = rawData.map {
                     OhlcEntry(
                         timestamp = it[0].toLong(),
@@ -101,14 +101,11 @@ class CoinDetailViewModel @Inject constructor(
         }
     }
 
-    fun loadAddressInfo(address: String, network: String, coinDetail: CoinDetail) {
-        val coinPrice = coinDetail.market_data.currentPrice[_selectedCurrency.value]
-
+    fun loadAddressInfo(address: String, network: String, coinPrice: Double?) {
         viewModelScope.launch {
             try {
                 val info = mempoolRepository.getAddressInfo(address)
                 val fees = mempoolRepository.getFees()
-
                 val balance = info.chain_stats.funded_txo_sum - info.chain_stats.spent_txo_sum
                 val fiatValue = coinPrice?.let {
                     BigDecimal(balance)
@@ -133,15 +130,11 @@ class CoinDetailViewModel @Inject constructor(
 
     fun onAddressEntered(address: String) {
         _addressInput.value = address
-        viewModelScope.launch {
-            addressPreferences.saveAddress(address)
-        }
+        viewModelScope.launch { addressPreferences.saveAddress(address) }
     }
 
     fun onAmountChanged(newAmount: String) {
         _ownedAmount.value = newAmount
-        viewModelScope.launch {
-            amountPreferences.saveAmount(coinId, newAmount)
-        }
+        viewModelScope.launch { amountPreferences.saveAmount(coinId, newAmount) }
     }
 }

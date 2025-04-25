@@ -9,20 +9,15 @@ class CoinRepository @Inject constructor(
     private val api: CoinGeckoApiService
 ) {
     suspend fun getCoins(vsCurrency: String): List<Coin> {
-        return api.getCoins(
-            vsCurrency = vsCurrency,
-            order = "market_cap_desc",
-            perPage = 50,
-            page = 1,
-            sparkline = false
-        )
+        return api.getCoins(vsCurrency = vsCurrency)
     }
 
     suspend fun getCoinDetail(coinId: String): CoinDetail {
-        return api.getCoinDetail(coinId)
+        return api.getCoinDetail(coinId = coinId)
     }
 
-    suspend fun getOhlcData(coinId: String, days: Int, vsCurrency: String): List<List<Double>> {
-        return api.getOhlcData(coinId, vsCurrency, days)
+    suspend fun getOhlcData(coinId: String, vsCurrency: String, days: Int): List<List<Double>> {
+        return api.getOhlcData(coinId = coinId, vsCurrency = vsCurrency, days = days)
     }
 }
+

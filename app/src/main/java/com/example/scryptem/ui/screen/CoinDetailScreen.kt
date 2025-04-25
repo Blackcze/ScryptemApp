@@ -32,8 +32,9 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
     val addressInput by viewModel.addressInput.collectAsState()
     val addressInfo by viewModel.addressInfo.collectAsState()
     val ownedAmount by viewModel.ownedAmount.collectAsState()
-    var selectedDays by remember { mutableStateOf(30) }
+    val currency by viewModel.currency.collectAsState()
 
+    var selectedDays by remember { mutableStateOf(30) }
     val scrollState = rememberScrollState()
 
     Surface(
@@ -43,11 +44,13 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
         color = MaterialTheme.colorScheme.background
     ) {
         coinDetail?.let { coin ->
-            Column(modifier = Modifier.fillMaxSize()
-                .systemBarsPadding()
-                .padding(16.dp)) {
-
-                //Info o kryptoměně
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .systemBarsPadding()
+                    .padding(16.dp)
+            ) {
+                // Info o kryptoměně
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -57,7 +60,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = coin.name, style = MaterialTheme.typography.titleLarge)
                         Text(text = "Symbol: ${coin.symbol.uppercase()}")
-                        Text(text = "Cena: $${coin.market_data.currentPrice["usd"]}")
+                        Text(text = "Cena: ${coin.market_data.currentPrice[currency.lowercase()] ?: "-"} $currency")
                         Text(text = "Změna za 24h: ${coin.market_data.priceChange24h} %")
                     }
                     AsyncImage(
@@ -65,22 +68,20 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                         contentDescription = coin.name,
                         modifier = Modifier
                             .size(100.dp)
+                            .padding(start = 8.dp)
                     )
                 }
 
-
-
                 Spacer(modifier = Modifier.height(16.dp))
 
-                //Přepínač mezi 7/30 dní
                 TimeframeSelector(selectedDays) {
                     selectedDays = it
-                    viewModel.loadOhlcData(it)
+                    viewModel.loadOhlcData(it, currency)
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                //Graf
+                // Graf
                 if (ohlcData.isNotEmpty()) {
                     AndroidView(factory = { context ->
                         CandleStickChart(context).apply {
@@ -120,10 +121,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                                 setDrawGridLines(false)
                                 textColor = android.graphics.Color.parseColor("#FF6800")
                             }
-                            xAxis.position = XAxis.XAxisPosition.BOTTOM
                             axisRight.isEnabled = false
-                            axisLeft.setDrawGridLines(false)
-                            xAxis.setDrawGridLines(false)
                             legend.isEnabled = false
                             description.isEnabled = false
                             invalidate()
@@ -142,7 +140,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                //Zadání množství
+                // Zadání množství
                 Text("Vlastněné množství", style = MaterialTheme.typography.titleMedium)
                 OutlinedTextField(
                     value = ownedAmount,
@@ -152,7 +150,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                 )
 
-                val currentPrice = coin.market_data.currentPrice["usd"]
+                val currentPrice = coin.market_data.currentPrice[currency.lowercase()]
                 val calculated = try {
                     BigDecimal(ownedAmount.replace(",", "."))
                         .multiply(BigDecimal(currentPrice ?: 0.0))
@@ -163,11 +161,11 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Aktuální hodnota: $calculated USD")
+                Text("Aktuální hodnota: $calculated $currency")
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                //Vyhledávání zůstatku
+                // Zůstatek peněženky
                 val supportedNetworks = listOf("bitcoin")
                 if (coin.id in supportedNetworks) {
                     Text("Zůstatek peněženky", style = MaterialTheme.typography.titleMedium)
@@ -183,7 +181,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                                 viewModel.loadAddressInfo(
                                     address = addressInput,
                                     network = coin.id,
-                                    coinPriceUsd = coin.market_data.currentPrice["usd"]
+                                    coinPrice = currentPrice
                                 )
                             }
                         )
@@ -196,7 +194,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                             viewModel.loadAddressInfo(
                                 address = addressInput,
                                 network = coin.id,
-                                coinPriceUsd = coin.market_data.currentPrice["usd"]
+                                coinPrice = currentPrice
                             )
                         }
                     ) {
@@ -208,7 +206,7 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                     addressInfo?.let { info ->
                         val formatter = NumberFormat.getNumberInstance()
                         Text("Zůstatek: ${formatter.format(info.balance)} satoshi")
-                        Text("Zůstatek v USD: ${info.usdValue ?: "-"}")
+                        Text("Zůstatek v $currency: ${info.usdValue ?: "-"}")
                         Text("Přijato celkem: ${formatter.format(info.received)} satoshi")
                         Text("Odesláno celkem: ${formatter.format(info.spent)} satoshi")
                         Text("Doporučený poplatek: ${info.feeSuggestion ?: "-"}")
@@ -217,7 +215,6 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                //Popis kryptoměny
                 Text(
                     text = HtmlCompat.fromHtml(
                         coin.description.en,
