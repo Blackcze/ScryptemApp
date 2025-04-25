@@ -111,7 +111,18 @@ fun CoinDetailScreen(viewModel: CoinDetailViewModel = hiltViewModel()) {
                             }
 
                             data = CandleData(dataSet)
+                            xAxis.apply {
+                                position = XAxis.XAxisPosition.BOTTOM
+                                setDrawGridLines(false)
+                                textColor = android.graphics.Color.parseColor("#FF6800")
+                            }
+
+                            axisLeft.apply {
+                                setDrawGridLines(false)
+                                textColor = android.graphics.Color.parseColor("#FF6800")
+                            }
                             xAxis.position = XAxis.XAxisPosition.BOTTOM
+
                             axisRight.isEnabled = false
                             axisLeft.setDrawGridLines(false)
                             xAxis.setDrawGridLines(false)
