@@ -7,8 +7,8 @@ import androidx.lifecycle.SavedStateHandle
 import com.example.scryptem.data.local.AddressPreferences
 import com.example.scryptem.data.local.AmountPreferences
 import com.example.scryptem.data.local.SettingsPreferences
-import com.example.scryptem.data.remote.dto.CoinDetail
-import com.example.scryptem.data.remote.dto.OhlcEntry
+import com.example.scryptem.data.remote.CoinDetail
+import com.example.scryptem.data.remote.OhlcEntry
 import com.example.scryptem.data.repository.CoinRepository
 import com.example.scryptem.data.repository.MempoolRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

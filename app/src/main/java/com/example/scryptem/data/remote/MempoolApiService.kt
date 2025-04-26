@@ -1,7 +1,5 @@
 package com.example.scryptem.data.remote
 
-import com.example.scryptem.data.remote.dto.MempoolAddressResponse
-import com.example.scryptem.data.remote.dto.MempoolFeeResponse
 import retrofit2.http.GET
 import retrofit2.http.Path
 

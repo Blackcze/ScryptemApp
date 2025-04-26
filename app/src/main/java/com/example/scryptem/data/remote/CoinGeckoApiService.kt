@@ -1,6 +1,5 @@
 package com.example.scryptem.data.remote
 
-import com.example.scryptem.data.remote.dto.CoinDetail
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query

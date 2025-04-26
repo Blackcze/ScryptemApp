@@ -16,8 +16,6 @@ class SettingsViewModel @Inject constructor(
     val theme: StateFlow<String> = prefs.theme.stateIn(viewModelScope, SharingStarted.Lazily, "system")
     val currency: StateFlow<String> = prefs.currency.stateIn(viewModelScope, SharingStarted.Lazily, "USD")
     val defaultScreen: StateFlow<String> = prefs.defaultScreen.stateIn(viewModelScope, SharingStarted.Lazily, "List of all")
-    val refreshInterval: StateFlow<String> = prefs.refreshInterval.stateIn(viewModelScope, SharingStarted.Lazily, "15 min")
-    val notificationsEnabled: StateFlow<Boolean> = prefs.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
 
 
 
@@ -33,11 +31,4 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { prefs.setDefaultScreen(value) }
     }
 
-    fun setRefreshInterval(value: String) {
-        viewModelScope.launch { prefs.setRefreshInterval(value) }
-    }
-
-    fun setNotifications(enabled: Boolean) {
-        viewModelScope.launch { prefs.setNotifications(enabled) }
-    }
 }

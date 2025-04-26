@@ -2,7 +2,7 @@ package com.example.scryptem.data.repository
 
 import com.example.scryptem.data.remote.Coin
 import com.example.scryptem.data.remote.CoinGeckoApiService
-import com.example.scryptem.data.remote.dto.CoinDetail
+import com.example.scryptem.data.remote.CoinDetail
 import javax.inject.Inject
 
 class CoinRepository @Inject constructor(

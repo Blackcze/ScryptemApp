@@ -1,4 +1,4 @@
-package com.example.scryptem.data.remote.dto
+package com.example.scryptem.data.remote
 
 data class MempoolFeeResponse(
     val fastestFee: Int,

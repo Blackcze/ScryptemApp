@@ -20,8 +20,6 @@ fun SettingsScreen(
     val theme by viewModel.theme.collectAsState()
     val currency by viewModel.currency.collectAsState()
     val defaultScreen by viewModel.defaultScreen.collectAsState()
-    val refreshInterval by viewModel.refreshInterval.collectAsState()
-    val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
 
     Scaffold(
         topBar = {
@@ -46,6 +44,7 @@ fun SettingsScreen(
                     .fillMaxSize()
                     .padding(32.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
+
             ) { Text("Motiv aplikace")
                 DropdownSelector(
                     options = listOf("System", "Light", "Dark"),
@@ -69,24 +68,6 @@ fun SettingsScreen(
                     selected = defaultScreen,
                     onSelectedChange = { viewModel.setDefaultScreen(it) }
                 )
-
-                /*Text("Automatické obnovení dat")
-                DropdownSelector(
-                    options = listOf("5 min", "10 min", "15 min", "30 min", "1 h", "1 day", "1 week"),
-                    selected = refreshInterval,
-                    onSelectedChange = { viewModel.setRefreshInterval(it) }
-                )*/
-
-                /*Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Notifikace")
-                    Switch(
-                        checked = notificationsEnabled,
-                        onCheckedChange = { viewModel.setNotifications(it) }
-                    )
-                }*/
             }
         }
     }

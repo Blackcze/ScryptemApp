@@ -1,25 +1,43 @@
 package com.example.scryptem.ui.screen
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.scryptem.data.local.entity.FavoriteCoinEntity
 import com.example.scryptem.data.remote.Coin
+import com.example.scryptem.presentation.coin_detail.CoinViewModel
 import com.example.scryptem.presentation.favorite.FavoriteCoinViewModel
 import com.example.scryptem.presentation.settings.SettingsViewModel
-import com.example.scryptem.data.local.entity.FavoriteCoinEntity
-import com.example.scryptem.presentation.coin_detail.CoinViewModel
 import kotlinx.coroutines.flow.Flow
 import java.text.NumberFormat
 
@@ -29,11 +47,11 @@ fun CoinListScreen(
     navController: NavController,
     viewModel: CoinViewModel = hiltViewModel(),
     favoriteViewModel: FavoriteCoinViewModel = hiltViewModel(),
-    settingsViewModel: SettingsViewModel = hiltViewModel()  // ← Přidáme SettingsViewModel
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val coins by viewModel.coins.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-    val currency by settingsViewModel.currency.collectAsState()  // ← Načteme měnu
+    val currency by settingsViewModel.currency.collectAsState()
 
     Scaffold(
         topBar = {
