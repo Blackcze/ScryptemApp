@@ -17,14 +17,17 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.scryptem.data.local.entity.FavoriteCoinEntity
 import com.example.scryptem.presentation.favorite.FavoriteCoinViewModel
+import com.example.scryptem.presentation.settings.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoriteCoinsScreen(
     navController: NavController,
-    viewModel: FavoriteCoinViewModel = hiltViewModel()
+    viewModel: FavoriteCoinViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val favorites by viewModel.favorites.collectAsState()
+    val currency by settingsViewModel.currency.collectAsState()
 
     Scaffold(
         topBar = {
@@ -54,6 +57,8 @@ fun FavoriteCoinsScreen(
                     items(favorites) { coin ->
                         FavoriteCoinItem(
                             coin = coin,
+                            currency = currency,
+                            viewModel = viewModel,
                             onClick = {
                                 navController.navigate("coin_detail/${coin.id}")
                             },
@@ -71,9 +76,13 @@ fun FavoriteCoinsScreen(
 @Composable
 fun FavoriteCoinItem(
     coin: FavoriteCoinEntity,
+    currency: String,
+    viewModel: FavoriteCoinViewModel,
     onClick: () -> Unit,
     onRemove: () -> Unit
 ) {
+    val price by viewModel.getCoinPrice(coin.id, currency).collectAsState(initial = null)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -91,7 +100,11 @@ fun FavoriteCoinItem(
             Column {
                 Text(text = coin.name, style = MaterialTheme.typography.titleMedium)
                 Text(text = "Symbol: ${coin.symbol.uppercase()}")
-                Text(text = "Cena: $${coin.currentPrice}", style = MaterialTheme.typography.bodySmall)
+                if (price != null) {
+                    Text(text = "Cena: $price $currency", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    Text(text = "Načítání...", style = MaterialTheme.typography.bodySmall)
+                }
             }
         }
 

@@ -1,12 +1,14 @@
-package com.example.scryptem.ui.screen
+package com.example.scryptem.presentation.coin_detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.scryptem.data.local.SettingsPreferences
 import com.example.scryptem.data.remote.Coin
 import com.example.scryptem.data.repository.CoinRepository
-import com.example.scryptem.data.local.SettingsPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
