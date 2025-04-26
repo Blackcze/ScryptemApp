@@ -34,13 +34,13 @@ fun AppNavGraph(
             CoinListScreen(navController)
         }
         composable("coin_detail/{coinId}") {
-            CoinDetailScreen()
+            CoinDetailScreen(navController)
         }
         composable("favorite_coins") {
             FavoriteCoinsScreen(navController)
         }
         composable("settings") {
-            SettingsScreen()
+            SettingsScreen(navController)
         }
 
     }
