@@ -44,8 +44,8 @@ fun ScryptemTheme(
 ) {
     val theme by settingsViewModel.theme.collectAsState()
     val darkTheme = when (theme) {
-        "dark" -> true
-        "light" -> false
+        "Dark" -> true
+        "Light" -> false
         else -> isSystemInDarkTheme()
     }
 

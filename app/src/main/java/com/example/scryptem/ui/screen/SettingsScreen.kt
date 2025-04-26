@@ -48,7 +48,7 @@ fun SettingsScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) { Text("Motiv aplikace")
                 DropdownSelector(
-                    options = listOf("system", "light", "dark"),
+                    options = listOf("System", "Light", "Dark"),
                     selected = theme,
                     onSelectedChange = { viewModel.setTheme(it) }
                 )
@@ -65,19 +65,19 @@ fun SettingsScreen(
 
                 Text("Výchozí obrazovka")
                 DropdownSelector(
-                    options = listOf("List of all", "favorites"),
+                    options = listOf("List of all", "Favorites"),
                     selected = defaultScreen,
                     onSelectedChange = { viewModel.setDefaultScreen(it) }
                 )
 
-                Text("Automatické obnovení dat")
+                /*Text("Automatické obnovení dat")
                 DropdownSelector(
                     options = listOf("5 min", "10 min", "15 min", "30 min", "1 h", "1 day", "1 week"),
                     selected = refreshInterval,
                     onSelectedChange = { viewModel.setRefreshInterval(it) }
-                )
+                )*/
 
-                Row(
+                /*Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -86,7 +86,7 @@ fun SettingsScreen(
                         checked = notificationsEnabled,
                         onCheckedChange = { viewModel.setNotifications(it) }
                     )
-                }
+                }*/
             }
         }
     }
